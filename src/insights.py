@@ -1,0 +1,18 @@
+def generate_insights():
+
+    insights = """
+1. Sales show seasonal fluctuations across months.
+
+2. Certain product categories contribute significantly more revenue.
+
+3. Forecast indicates stable sales growth trend.
+
+4. Businesses should prepare inventory before peak sales periods.
+"""
+
+    with open(
+        "outputs/business_insights.txt",
+        "w"
+    ) as file:
+
+        file.write(insights)
