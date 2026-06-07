@@ -2,16 +2,16 @@ from prophet import Prophet
 import pandas as pd
 
 
-def forecast_sales(df):
+def forecast_sales(df, date_col='Order Date', target_col='Sales', periods=6, freq='ME', yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False):
 
     # ==========================================
     # MONTHLY SALES AGGREGATION
     # ==========================================
 
     monthly_sales = df.resample(
-        'ME',
-        on='Order Date'
-    )['Sales'].sum().reset_index()
+        freq,
+        on=date_col
+    )[target_col].sum().reset_index()
 
     # ==========================================
     # RENAME COLUMNS FOR PROPHET
@@ -24,9 +24,9 @@ def forecast_sales(df):
     # ==========================================
 
     model = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=False,
-        daily_seasonality=False
+        yearly_seasonality=yearly_seasonality,
+        weekly_seasonality=weekly_seasonality,
+        daily_seasonality=daily_seasonality
     )
 
     # ==========================================
@@ -40,8 +40,8 @@ def forecast_sales(df):
     # ==========================================
 
     future = model.make_future_dataframe(
-        periods=6,
-        freq='ME'
+        periods=periods,
+        freq=freq
     )
 
     # ==========================================
@@ -58,7 +58,7 @@ def forecast_sales(df):
         ['ds', 'yhat', 'yhat_lower', 'yhat_upper']
     ]
 
-    future_forecast = forecast_output.tail(6)
+    future_forecast = forecast_output.tail(periods)
 
     return (
         monthly_sales,

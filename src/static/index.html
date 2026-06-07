@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DemandForecast AI - Sales & Demand Forecasting Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-chart-line brand-icon"></i>
+                <div class="brand-text">
+                    <h1>DemandForecast</h1>
+                    <span>AI-Powered Decisions</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-tab="dashboard">
+                        <i class="fa-solid fa-gauge"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li class="nav-item" data-tab="dataset">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Data Preview & Prep</span>
+                    </li>
+                    <li class="nav-item" data-tab="config">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Model Config</span>
+                    </li>
+                    <li class="nav-item" data-tab="insights">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Business Decisions</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="internship-badge">
+                    <span class="badge-label">Task 1 Fulfill</span>
+                    <span class="intern-title">Future Interns (2026)</span>
+                </div>
+                <div class="share-box">
+                    <p>Share your demo on LinkedIn!</p>
+                    <a href="https://www.linkedin.com/company/future-interns/" target="_blank" class="btn btn-linkedin">
+                        <i class="fa-brands fa-linkedin"></i> Tag Future Interns
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h2 id="page-title">Executive Dashboard</h2>
+                    <p id="page-subtitle">Historical analysis and machine learning forecasting</p>
+                </div>
+                <div class="header-actions">
+                    <div class="dataset-indicator">
+                        <i class="fa-solid fa-database"></i>
+                        <span id="active-dataset-name">Sample-Superstore.csv</span>
+                    </div>
+                    <button class="btn btn-primary" id="btn-run-forecast-header">
+                        <i class="fa-solid fa-play"></i> Run Forecast
+                    </button>
+                </div>
+            </header>
+
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div class="spinner-text">Fitting Prophet Model...</div>
+                    <p class="spinner-subtext">Aggregating dates, computing trends, and applying time-series seasonality features.</p>
+                </div>
+            </div>
+
+            <!-- Tab Panels -->
+            <div class="tab-panels">
+                
+                <!-- DASHBOARD TAB -->
+                <div class="tab-panel active" id="panel-dashboard">
+                    <!-- KPI Cards Grid -->
+                    <section class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrapper sales">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Total Historical Sales</span>
+                                <h3 class="kpi-value" id="kpi-total-sales">$0.00</h3>
+                                <span class="kpi-meta">All-time transactions sum</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrapper avg">
+                                <i class="fa-solid fa-calculator"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Avg. Monthly Sales</span>
+                                <h3 class="kpi-value" id="kpi-avg-sales">$0.00</h3>
+                                <span class="kpi-meta">Historical monthly average</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrapper forecast">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Projected Next Month</span>
+                                <h3 class="kpi-value" id="kpi-next-forecast">$0.00</h3>
+                                <span class="kpi-meta" id="kpi-trend-pct">-- % trend vs. history</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrapper error">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Model Error Rate (MAE)</span>
+                                <h3 class="kpi-value" id="kpi-mae">$0.00</h3>
+                                <span class="kpi-meta" id="kpi-rmse">RMSE: --</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Main Forecast Chart Card -->
+                    <section class="card chart-card forecast-chart-wrapper">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Actual Sales vs. Future Forecast</h3>
+                                <p>Historical demand combined with Prophet's forecasted trend (shaded area represents 80% confidence interval)</p>
+                            </div>
+                            <div class="card-header-actions">
+                                <span class="legend-item"><span class="legend-color actual"></span> Actual Sales</span>
+                                <span class="legend-item"><span class="legend-color fit"></span> Model Fit</span>
+                                <span class="legend-item"><span class="legend-color predicted"></span> Future Forecast</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="forecastChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Breakdown & Seasonality Row -->
+                    <section class="grid-2-col">
+                        <!-- Category / Region Sales -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Sales Segmentations</h3>
+                                    <p>Contribution of different business segments to overall revenue</p>
+                                </div>
+                                <div class="toggle-buttons">
+                                    <button class="btn btn-sm btn-toggle active" id="btn-toggle-category">Category</button>
+                                    <button class="btn btn-sm btn-toggle" id="btn-toggle-region">Region</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container-half">
+                                    <canvas id="segmentChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seasonality Component -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Yearly Seasonality Profile</h3>
+                                    <p>Prophet decomposed monthly demand pattern (average additive effect on sales)</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container-half">
+                                    <canvas id="seasonalityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- DATA PREVIEW TAB -->
+                <div class="tab-panel" id="panel-dataset">
+                    <section class="grid-2-col-asym">
+                        <!-- Data Control Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Select or Upload Sales Data</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="upload-zone" id="upload-zone">
+                                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                                    <h4>Drag & Drop CSV File here</h4>
+                                    <p>or click to browse local files</p>
+                                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                                </div>
+
+                                <div class="or-separator">
+                                    <span>OR</span>
+                                </div>
+
+                                <button class="btn btn-secondary w-full" id="btn-load-default">
+                                    <i class="fa-solid fa-database"></i> Load Default Superstore Dataset
+                                </button>
+
+                                <div class="divider"></div>
+
+                                <div id="column-mapping-section" style="display: none;">
+                                    <h3>Column Mapping</h3>
+                                    <p class="text-secondary">Identify which columns in your CSV correspond to the required time-series inputs:</p>
+                                    
+                                    <div class="form-group">
+                                        <label for="select-date-col">Date Column (e.g., Order Date)</label>
+                                        <select id="select-date-col" class="form-control"></select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="select-target-col">Target / Sales Column (e.g., Sales, Demand)</label>
+                                        <select id="select-target-col" class="form-control"></select>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary w-full mt-3" id="btn-save-mapping">
+                                        Confirm Fields
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Meta Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Dataset Overview</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="meta-info-grid" id="data-meta-placeholder">
+                                    <p class="text-secondary text-center py-5">No dataset loaded. Upload a file or load the default superstore data.</p>
+                                </div>
+                                <div class="meta-info-grid" id="data-meta-info" style="display: none;">
+                                    <div class="meta-stat">
+                                        <span class="meta-label">Filename</span>
+                                        <span class="meta-val" id="meta-filename">Sample-Superstore.csv</span>
+                                    </div>
+                                    <div class="meta-stat">
+                                        <span class="meta-label">Total Rows</span>
+                                        <span class="meta-val" id="meta-rows">0</span>
+                                    </div>
+                                    <div class="meta-stat">
+                                        <span class="meta-label">Detected Columns</span>
+                                        <span class="meta-val" id="meta-cols">0</span>
+                                    </div>
+                                    <div class="meta-stat">
+                                        <span class="meta-label">Missing Values</span>
+                                        <span class="meta-val text-warning" id="meta-missing">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Preview Table Card -->
+                    <section class="card table-card mt-4">
+                        <div class="card-header">
+                            <h3>Raw Data Sample Preview (First 15 Rows)</h3>
+                            <p>Verify data format, encodings, and values before running model training.</p>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="data-table" id="data-preview-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: center; color: var(--text-secondary);">No data loaded.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="text-align: center; color: var(--text-secondary);">Use the left panel to load or upload a file.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- MODEL CONFIG TAB -->
+                <div class="tab-panel" id="panel-config">
+                    <section class="grid-2-col">
+                        <!-- Model Parameter Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Prophet Hyperparameters</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="forecast-periods">Forecast Horizon (Periods): <strong id="lbl-periods">6</strong></label>
+                                    <input type="range" id="forecast-periods" min="1" max="24" value="6" class="form-range">
+                                    <span class="range-subtext">Number of steps forward to forecast</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="forecast-freq">Time Granularity (Frequency)</label>
+                                    <select id="forecast-freq" class="form-control">
+                                        <option value="ME">Monthly (Month End - Default)</option>
+                                        <option value="W">Weekly</option>
+                                        <option value="D">Daily</option>
+                                    </select>
+                                    <p class="input-tip">Aggregates sales data into selected increments before fitting the model.</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="toggle-label">Seasonality Toggles</label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" id="seasonality-yearly" checked>
+                                            <span class="checkmark"></span>
+                                            Yearly Seasonality (captures annual peaks)
+                                        </label>
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" id="seasonality-weekly">
+                                            <span class="checkmark"></span>
+                                            Weekly Seasonality (captures days-of-week trends)
+                                        </label>
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" id="seasonality-daily">
+                                            <span class="checkmark"></span>
+                                            Daily Seasonality (captures intraday trends)
+                                        </label>
+                                    </div>
+                                    <p class="input-tip">Enabling daily/weekly seasonality is recommended only if your dataset has day-by-day timestamps.</p>
+                                </div>
+
+                                <button class="btn btn-primary w-full mt-4" id="btn-run-forecast-config">
+                                    <i class="fa-solid fa-gears"></i> Fit & Generate Forecast
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Model Overview Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Prophet Algorithm Explanation</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="theory-box">
+                                    <h4>What is Facebook Prophet?</h4>
+                                    <p>Prophet is an open-source forecasting library developed by Meta's Data Science team. It is optimized for business time-series data which frequently display strong seasonal components and multiple years of historical records.</p>
+                                    
+                                    <h4>How does it model time series?</h4>
+                                    <p>Prophet uses an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects. It is expressed mathematically as:</p>
+                                    <div class="math-formula">
+                                        y(t) = g(t) + s(t) + h(t) + &epsilon;<sub>t</sub>
+                                    </div>
+                                    <ul class="formula-legend">
+                                        <li><strong>g(t)</strong>: piecewise linear or logistic growth trend</li>
+                                        <li><strong>s(t)</strong>: periodic changes (yearly/weekly seasonality)</li>
+                                        <li><strong>h(t)</strong>: holiday effects (impact of specific days)</li>
+                                        <li><strong>&epsilon;<sub>t</sub></strong>: error term (unexplained variance)</li>
+                                    </ul>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fa-solid fa-lightbulb"></i>
+                                        <div>
+                                            <strong>Why choose Prophet?</strong> It handles missing values, large outliers, and dramatic structural breaks (like product launches or holiday surges) extremely robustly compared to traditional ARIMA/SARIMAX models.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- BUSINESS INSIGHTS TAB -->
+                <div class="tab-panel" id="panel-insights">
+                    <!-- Dashboard Narrative Recommendations -->
+                    <section class="card">
+                        <div class="card-header">
+                            <h3>Actionable Business Recommendations</h3>
+                            <p>Interpreting forecasting trends into day-to-day decisions for Inventory, Staffing, and Cash Reserves.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="insights-container" id="business-insights-list">
+                                <p class="text-secondary text-center py-5">No insights available. Run the forecasting model to generate business planning insights.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Interactive Planning Simulator -->
+                    <section class="card mt-4">
+                        <div class="card-header">
+                            <h3>Revenue & Inventory Target Planner</h3>
+                            <p>Simulate requirements to reach custom sales milestones based on predicted demand baseline.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid-2-col">
+                                <div class="form-card">
+                                    <div class="form-group">
+                                        <label for="sim-target-revenue">Monthly Target Sales Revenue ($)</label>
+                                        <input type="number" id="sim-target-revenue" class="form-control" placeholder="e.g. 80000" value="70000">
+                                    </div>
+                                    <button class="btn btn-secondary w-full" id="btn-run-simulation">
+                                        Calculate Growth Needs
+                                    </button>
+                                </div>
+                                
+                                <div class="simulation-results-box" id="sim-results">
+                                    <div class="sim-placeholder-text">
+                                        <i class="fa-solid fa-calculator-combined sim-icon"></i>
+                                        <p>Input your target and click calculate to check baseline feasibility.</p>
+                                    </div>
+                                    <div class="sim-content-box" style="display: none;">
+                                        <h4 class="sim-status-title">Target Analysis</h4>
+                                        <div class="sim-stat-row">
+                                            <span>Baseline Projected Avg:</span>
+                                            <strong id="sim-baseline-val">$0.00</strong>
+                                        </div>
+                                        <div class="sim-stat-row">
+                                            <span>Target Revenue:</span>
+                                            <strong id="sim-target-val">$0.00</strong>
+                                        </div>
+                                        <div class="sim-stat-row">
+                                            <span>Growth Gap Required:</span>
+                                            <strong id="sim-gap-val">$0.00 (0.0%)</strong>
+                                        </div>
+                                        <div class="sim-recommendation">
+                                            <h5>Strategic Recommendations:</h5>
+                                            <p id="sim-tip">Calculating suggestions...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    <!-- App Script -->
+    <script src="app.js"></script>
+</body>
+</html>
